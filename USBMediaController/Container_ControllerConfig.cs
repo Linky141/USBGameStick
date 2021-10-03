@@ -15,6 +15,7 @@ namespace USBMediaController
         Container_SingleCommand[] profileSetting = new Container_SingleCommand[10];
         string label;
         string selectedLabel;
+        bool gamepadMode;
 
         #region CONSTRUCTORS
         public Container_ControllerConfig(Container_SingleCommand[] ps, string label)
@@ -29,6 +30,15 @@ namespace USBMediaController
         #endregion
 
         #region GET SET
+
+
+
+        public bool getGamepadStatusByID(string listLabel)
+        {
+            int id = 0;
+            for (int clk = 0; clk < list.Count; clk++) if (list[clk].getLabel() == listLabel) id = clk;            
+            return list[id].getGamepadMode();
+        }
 
         public string getCommandByID(string command, string listLabel)
         {
@@ -45,10 +55,13 @@ namespace USBMediaController
         public Container_SingleCommand[] getProfileSetting() { return profileSetting; }
         public string getLabel() { return label; }
         public string getSelectedLabel() { return selectedLabel; }
+        public bool getGamepadMode() { return gamepadMode; }
 
         public void setProfileSetting(int num, Container_SingleCommand opt) { profileSetting[num] = opt; }
         public void setLabel(string val) { label = val; }
         public void setSelectedLabel(string val) { selectedLabel = val; }
+
+        public void setGamepadMode(bool val) { gamepadMode = val; }
 
         #endregion
 

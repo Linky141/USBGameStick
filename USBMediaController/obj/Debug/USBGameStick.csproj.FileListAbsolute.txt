@@ -82,3 +82,4 @@ C:\Users\tomas\Documents\Programowanie\VisualStudio\USBGameStick\USBGameStick\US
 C:\Users\tomas\Documents\Programowanie\VisualStudio\USBGameStick\USBGameStick\USBMediaController\obj\Debug\USBGameStick.Properties.Resources.resources
 C:\Users\tomas\Documents\Programowanie\VisualStudio\USBGameStick\USBGameStick\USBMediaController\obj\Debug\USBGameStick.exe
 C:\Users\tomas\Documents\Programowanie\VisualStudio\USBGameStick\USBGameStick\USBMediaController\obj\Debug\USBGameStick.pdb
+C:\Users\tomas\Documents\Programowanie\VisualStudio\USBGameStick\USBGameStick\USBMediaController\bin\Debug\Nefarius.ViGEm.Client.dll

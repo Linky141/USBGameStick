@@ -24,6 +24,7 @@ namespace USBMediaController
 
         private Container_ControllerConfig container = new Container_ControllerConfig();
         private bool apply = false;
+        private bool gamepadMode = false;
 
         #endregion
 
@@ -62,16 +63,53 @@ namespace USBMediaController
          }
  */
 
+        private void ChangeToControlerON()
+        {
+            this.gamepadMode = true;
+            btnGamepadMode.Content = "Gamepad mode: ON";
+            cbx_act1Action.IsEnabled = false;
+            cbx_act2Action.IsEnabled = false;
+            cbx_act3Action.IsEnabled = false;
+            cbx_act4Action.IsEnabled = false;
+            cbx_act5Action.IsEnabled = false;
+            cbx_act6Action.IsEnabled = false;
+            cbx_upAction.IsEnabled = false;
+            cbx_downAction.IsEnabled = false;
+            cbx_leftAction.IsEnabled = false;
+            cbx_rightAction.IsEnabled = false;
+        }
+
+        private void ChangeToControlerOFF()
+        {
+            this.gamepadMode = false;
+            btnGamepadMode.Content = "Gamepad mode: OFF";
+            cbx_act1Action.IsEnabled = true;
+            cbx_act2Action.IsEnabled = true;
+            cbx_act3Action.IsEnabled = true;
+            cbx_act4Action.IsEnabled = true;
+            cbx_act5Action.IsEnabled = true;
+            cbx_act6Action.IsEnabled = true;
+            cbx_upAction.IsEnabled = true;
+            cbx_downAction.IsEnabled = true;
+            cbx_leftAction.IsEnabled = true;
+            cbx_rightAction.IsEnabled = true;
+        }
+
         private void Refresh()
         {
             cbx_profile.Items.Clear();
             for (int clk = 0; clk < container.list.Count; clk++) cbx_profile.Items.Add(container.list[clk].getLabel());
-            cbx_profile.SelectedItem = container.getSelectedLabel();
+            cbx_profile.SelectedItem = container.getSelectedLabel();         
 
             for (int clk = 0; clk < container.list.Count; clk++)
             {
                 if (container.list[clk].getLabel() == container.getSelectedLabel())
                 {
+                    if (container.list[clk].getGamepadMode())
+                        ChangeToControlerON();
+                    else
+                        ChangeToControlerOFF();
+
                     cbx_upAction.SelectedItem = container.list[clk].getProfileSetting(0).getCommand();
                     cbx_downAction.SelectedItem = container.list[clk].getProfileSetting(1).getCommand();
                     cbx_leftAction.SelectedItem = container.list[clk].getProfileSetting(2).getCommand();
@@ -87,7 +125,6 @@ namespace USBMediaController
             }
         }
    
-
         private void FillComboBox()
         {
             List<string> actions = new List<string>();
@@ -229,7 +266,6 @@ namespace USBMediaController
             cbx_act6Action.SelectedIndex = 0;
            
         }
-
         #endregion
 
         //------------------------------------------------------------------------------------
@@ -241,7 +277,13 @@ namespace USBMediaController
             Refresh();
         }
 
-
+        private void btnGamepadMode_Click(object sender, RoutedEventArgs e)
+        {
+            if (gamepadMode)
+                ChangeToControlerOFF();
+            else
+                ChangeToControlerON();
+        }
 
         private void btn_profileSave_Click(object sender, RoutedEventArgs e)
         {
@@ -297,6 +339,7 @@ namespace USBMediaController
         private void btn_profileOverwrite_Click(object sender, RoutedEventArgs e)
         {
             int index = cbx_profile.SelectedIndex;
+            container.list[index].setGamepadMode(this.gamepadMode);
 
             container.list[index].setProfileSetting(0, new Container_SingleCommand(cbx_upAction.SelectedItem.ToString(), "UP"));
             container.list[index].setProfileSetting(1, new Container_SingleCommand(cbx_downAction.SelectedItem.ToString(), "DOWN"));
@@ -311,14 +354,11 @@ namespace USBMediaController
 
             Refresh();
         }
-
-       
-
+      
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left) this.DragMove();
         }
-
 
         private void btnHelp_Click(object sender, RoutedEventArgs e)
         {
@@ -334,7 +374,6 @@ namespace USBMediaController
             NotyficationWindow window = new NotyficationWindow(true, comunicat, "Close");
             window.ShowDialog();
         }
-
         #endregion
 
         //------------------------------------------------------------------------------------
@@ -343,6 +382,7 @@ namespace USBMediaController
         public bool Apply() { return apply; }
 
         public Container_ControllerConfig GetConfig() { return container; }
+
 
 
 
