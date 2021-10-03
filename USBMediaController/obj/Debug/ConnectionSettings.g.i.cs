@@ -135,7 +135,7 @@ namespace USBMediaController {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/USBMediaController;component/connectionsettings.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/USBGameStick;component/connectionsettings.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\ConnectionSettings.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);
