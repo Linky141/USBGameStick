@@ -139,16 +139,18 @@ namespace USBMediaController
         private void SetConnectionInfoFields()
         {
             lbl_connectionStatus.Content = getConnectionStatus();
-            lbl_trayInfoConnection.Content = getConnectionStatus();
+            lbl_trayInfoConnection.Content = getConnectionStatus();          
         }
 
         private void SetProfileInfoFields()
         {
             lbl_selectedProfile.Content = controllerConfig.getSelectedLabel();
+            tray_main.ToolTipText = controllerConfig.getSelectedLabel();
             lbl_trayInfoProfile.Content = "Profile: " + controllerConfig.getSelectedLabel();
             if (controllerConfig.getGamepadStatusByID(controllerConfig.getSelectedLabel())){
                 lbl_selectedProfile.Content += " (Gamepad mode)";
                 lbl_trayInfoProfile.Content += " (Gamepad mode)";
+                tray_main.ToolTipText += " (Gamepad mode)";
             }
         }
 

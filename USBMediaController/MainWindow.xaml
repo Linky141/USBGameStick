@@ -31,7 +31,7 @@
         <Button x:Name="btn_connect" Content="Połącz" HorizontalAlignment="Left" Margin="462,301,0,0" VerticalAlignment="Top" Width="320" Click="btn_connect_Click" Height="108"/>
         <TextBox x:Name="tbx_console" HorizontalAlignment="Left" Margin="10,35,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Height="374" Width="261" ScrollViewer.VerticalScrollBarVisibility="Visible" IsEnabled="True" IsReadOnly="True"/>
         <Label Content="Console" HorizontalAlignment="Left" Margin="10,4,0,0" VerticalAlignment="Top" Width="261"/>
-        <tb:TaskbarIcon x:Name="tray_main"  ToolTipText="hello world" >
+        <tb:TaskbarIcon x:Name="tray_main"  ToolTipText="" >
             <tb:TaskbarIcon.TrayToolTip>
                 <Border Background="DarkCyan" BorderBrush="Black" BorderThickness="1" CornerRadius="20" Width="160" Height="60">
                     <Grid>
