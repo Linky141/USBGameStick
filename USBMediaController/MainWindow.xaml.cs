@@ -62,7 +62,7 @@ namespace USBMediaController
             vGamepadController = vGamepadclient.CreateXbox360Controller();
             vGamepadController.Connect();
 
-            if (File.Exists(@"C:\USBMediaControllerv2\icon.ico")) tray_main.Icon = new System.Drawing.Icon(@"C:\USBMediaControllerv2\icon.ico");
+            if (File.Exists(@"C:\USBGameStick\icon2.ico")) tray_main.Icon = new System.Drawing.Icon(@"C:\USBGameStick\icon2.ico");
             else ConsoleWrite("#Error Load Icon");
 
             if (!LoadCommunicationConfig())
