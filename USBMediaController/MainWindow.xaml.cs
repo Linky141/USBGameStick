@@ -69,20 +69,20 @@ namespace USBMediaController
             {
                 ConsoleWrite("#Error Load Connection Config", Brushes.Pink);
                 ShowSysTrayInfo("USBMediaController", "Error Load Connection Config", BalloonIcon.Error);
-            }
-            else
-            {
-                btn_connect.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
-            }
-            if (!LoadControllerConfig())
+            }           
+            else if (!LoadControllerConfig())
             {
                 ConsoleWrite("#Error Load Controller Config", Brushes.Pink);
                 ShowSysTrayInfo("USBMediaController", "Error Load Controller Config", BalloonIcon.Error);
             }
-            if (!LoadControllerCurrentSelected())
+            else if (!LoadControllerCurrentSelected())
             {
                 ConsoleWrite("#Error Load Controller Current Selected Profile Config", Brushes.Pink);
                 ShowSysTrayInfo("USBMediaController", "Error Load Controller Current Selected Profile Config", BalloonIcon.Error);
+            }
+            else
+            {
+                btn_connect.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
             }
             CheckFirstRun();
             SetAllInfoControls();
