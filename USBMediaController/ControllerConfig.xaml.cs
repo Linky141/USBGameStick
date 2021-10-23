@@ -19,239 +19,266 @@ namespace USBMediaController
     /// </summary>
     public partial class ControllerConfig : Window
     {
-        //------------------------------------------------------------------------------------
         #region VARIABLE
-
         private Container_ControllerConfig container = new Container_ControllerConfig();
         private bool apply = false;
         private bool gamepadMode = false;
-
         #endregion
 
-        //------------------------------------------------------------------------------------
         #region CONSTRUCTOR
         public ControllerConfig()
         {
             InitializeComponent();
-            FillComboBox();
-            //CenterWindowOnScreen();
+            LoadProfiles();
+            FillComboBox(IsCurrentGamepad());
             Refresh();
+           
         }
 
         public ControllerConfig(Container_ControllerConfig container)
         {
             InitializeComponent();
-            FillComboBox();
+            LoadProfiles();
             this.container = container;
-            //CenterWindowOnScreen();
+            FillComboBox(IsCurrentGamepad());
             Refresh();
+            
         }
 
         #endregion
 
-        //------------------------------------------------------------------------------------
         #region METHODS
-
-        /* private void CenterWindowOnScreen()
-         {
-             double screenWidth = System.Windows.SystemParameters.PrimaryScreenWidth;
-             double screenHeight = System.Windows.SystemParameters.PrimaryScreenHeight;
-             double windowWidth = this.Width;
-             double windowHeight = this.Height;
-             this.Left = (screenWidth / 2) - (windowWidth / 2);
-             this.Top = (screenHeight / 2) - (windowHeight / 2);
-         }
- */
 
         private void ChangeToControlerON()
         {
             this.gamepadMode = true;
             btnGamepadMode.Content = "Gamepad mode: ON";
-            cbx_act1Action.IsEnabled = false;
-            cbx_act2Action.IsEnabled = false;
-            cbx_act3Action.IsEnabled = false;
-            cbx_act4Action.IsEnabled = false;
-            cbx_act5Action.IsEnabled = false;
-            cbx_act6Action.IsEnabled = false;
-            cbx_upAction.IsEnabled = false;
-            cbx_downAction.IsEnabled = false;
-            cbx_leftAction.IsEnabled = false;
-            cbx_rightAction.IsEnabled = false;
+            FillComboBox(true);
         }
 
         private void ChangeToControlerOFF()
         {
             this.gamepadMode = false;
             btnGamepadMode.Content = "Gamepad mode: OFF";
-            cbx_act1Action.IsEnabled = true;
-            cbx_act2Action.IsEnabled = true;
-            cbx_act3Action.IsEnabled = true;
-            cbx_act4Action.IsEnabled = true;
-            cbx_act5Action.IsEnabled = true;
-            cbx_act6Action.IsEnabled = true;
-            cbx_upAction.IsEnabled = true;
-            cbx_downAction.IsEnabled = true;
-            cbx_leftAction.IsEnabled = true;
-            cbx_rightAction.IsEnabled = true;
+            FillComboBox(false);
+        }
+
+
+        private void LoadProfiles()
+        {
+            cbx_profile.Items.Clear();
+            for (int clk = 0; clk < container.list.Count; clk++) cbx_profile.Items.Add(container.list[clk].getLabel());
+            cbx_profile.SelectedItem = container.getSelectedLabel();
         }
 
         private void Refresh()
         {
-            cbx_profile.Items.Clear();
-            for (int clk = 0; clk < container.list.Count; clk++) cbx_profile.Items.Add(container.list[clk].getLabel());
-            cbx_profile.SelectedItem = container.getSelectedLabel();         
+            LoadProfiles();
 
+            int current = CurrentProfile();
+
+            if (IsCurrentGamepad())
+                ChangeToControlerON();
+            else
+                ChangeToControlerOFF();
+
+            cbx_upAction.SelectedItem = container.list[current].getProfileSetting(0).getCommand();
+            cbx_downAction.SelectedItem = container.list[current].getProfileSetting(1).getCommand();
+            cbx_leftAction.SelectedItem = container.list[current].getProfileSetting(2).getCommand();
+            cbx_rightAction.SelectedItem = container.list[current].getProfileSetting(3).getCommand();
+
+            cbx_act1Action.SelectedItem = container.list[current].getProfileSetting(4).getCommand();
+            cbx_act2Action.SelectedItem = container.list[current].getProfileSetting(5).getCommand();
+            cbx_act3Action.SelectedItem = container.list[current].getProfileSetting(6).getCommand();
+            cbx_act4Action.SelectedItem = container.list[current].getProfileSetting(7).getCommand();
+            cbx_act5Action.SelectedItem = container.list[current].getProfileSetting(8).getCommand();
+            cbx_act6Action.SelectedItem = container.list[current].getProfileSetting(9).getCommand();
+        }
+
+        private int CurrentProfile()
+        {
             for (int clk = 0; clk < container.list.Count; clk++)
             {
                 if (container.list[clk].getLabel() == container.getSelectedLabel())
                 {
-                    if (container.list[clk].getGamepadMode())
-                        ChangeToControlerON();
-                    else
-                        ChangeToControlerOFF();
-
-                    cbx_upAction.SelectedItem = container.list[clk].getProfileSetting(0).getCommand();
-                    cbx_downAction.SelectedItem = container.list[clk].getProfileSetting(1).getCommand();
-                    cbx_leftAction.SelectedItem = container.list[clk].getProfileSetting(2).getCommand();
-                    cbx_rightAction.SelectedItem = container.list[clk].getProfileSetting(3).getCommand();
-
-                    cbx_act1Action.SelectedItem = container.list[clk].getProfileSetting(4).getCommand();
-                    cbx_act2Action.SelectedItem = container.list[clk].getProfileSetting(5).getCommand();
-                    cbx_act3Action.SelectedItem = container.list[clk].getProfileSetting(6).getCommand();
-                    cbx_act4Action.SelectedItem = container.list[clk].getProfileSetting(7).getCommand();
-                    cbx_act5Action.SelectedItem = container.list[clk].getProfileSetting(8).getCommand();
-                    cbx_act6Action.SelectedItem = container.list[clk].getProfileSetting(9).getCommand();
+                    return clk;
                 }
             }
+            return -1;
         }
-   
-        private void FillComboBox()
+
+        private bool IsCurrentGamepad()
         {
-            List<string> actions = new List<string>();
+            return container.list[CurrentProfile()].getGamepadMode();
+        }
 
-            #region FILLACTIONS
-            actions.Add("A");
-            actions.Add("B");
-            actions.Add("C");
-            actions.Add("D");
-            actions.Add("E");
-            actions.Add("F");
-            actions.Add("G");
-            actions.Add("H");
-            actions.Add("I");
-            actions.Add("J");
-            actions.Add("K");
-            actions.Add("L");
-            actions.Add("M");
-            actions.Add("N");
-            actions.Add("O");
-            actions.Add("P");
-            actions.Add("Q");
-            actions.Add("R");
-            actions.Add("S");
-            actions.Add("T");
-            actions.Add("U");
-            actions.Add("V");
-            actions.Add("W");
-            actions.Add("X");
-            actions.Add("Y");
-            actions.Add("Z");
-            actions.Add("1");
-            actions.Add("2");
-            actions.Add("3");
-            actions.Add("4");
-            actions.Add("5");
-            actions.Add("6");
-            actions.Add("7");
-            actions.Add("8");
-            actions.Add("9");
-            actions.Add("0");
-
-            actions.Add("[");
-            actions.Add("]");
-            actions.Add("\\");
-            actions.Add(";");
-            actions.Add("'");
-            actions.Add(",");
-            actions.Add(".");
-            actions.Add("/");
-            actions.Add("-");
-            //actions.Add("=");         
-            actions.Add("`");
-
-            actions.Add("F1");
-            actions.Add("F2");
-            actions.Add("F3");
-            actions.Add("F4");
-            actions.Add("F5");
-            actions.Add("F6");
-            actions.Add("F7");
-            actions.Add("F8");
-            actions.Add("F9");
-            actions.Add("F10");
-            actions.Add("F11");
-            actions.Add("F12");
-
-            actions.Add("LCTRL");
-            actions.Add("RCTRL");
-            actions.Add("LSHIFT");
-            actions.Add("RSHIFT");
-            actions.Add("LALT");
-            //actions.Add("RALT");         
-            actions.Add("BACKSPACE");
-            actions.Add("ESC");
-            actions.Add("INSERT");
-            actions.Add("DELETE");
-            actions.Add("HOME");
-            actions.Add("END");
-            actions.Add("PGUP");
-            actions.Add("PGDOWN");
-            actions.Add("PRTSCR");
-            actions.Add("SCRLCK");
-            actions.Add("PAUSE");
-            actions.Add("NUMLCK");
-            actions.Add("CAPSLCK");
-            actions.Add("TAB");
-            actions.Add("SPACE");
-            actions.Add("ENTER");
-
-            actions.Add("NUMERIC/");
-            actions.Add("NUMERIC*");
-            actions.Add("NUMERIC-");
-            actions.Add("NUMERIC1");
-            actions.Add("NUMERIC2");
-            actions.Add("NUMERIC3");
-            actions.Add("NUMERIC4");
-            actions.Add("NUMERIC5");
-            actions.Add("NUMERIC6");
-            actions.Add("NUMERIC7");
-            actions.Add("NUMERIC8");
-            actions.Add("NUMERIC9");
-            actions.Add("NUMERIC0");
-            actions.Add("NUMERIC+");
-            actions.Add("NUMERIC,");
-
-            actions.Add("UPARROW");
-            actions.Add("DOWNARROW");
-            actions.Add("LEFTARROW");
-            actions.Add("RIGHTARROW");
+        private void FillComboBox(Boolean isGamepad)
+        {
+            List<string> actionsKeyboard = new List<string>()
+            #region fill keyboard
+            {
+                "A",
+                "B",
+                "C",
+                "D",
+                "E",
+                "F",
+                "G",
+                "H",
+                "I",
+                "J",
+                "K",
+                "L",
+                "N",
+                "O",
+                "P",
+                "Q",
+                "R",
+                "S",
+                "T",
+                "U",
+                "V",
+                "W",
+                "X",
+                "Y",
+                "Z",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8",
+                "9",
+                "0",
+                "[",
+                "]",
+                "\\",
+                ";",
+                "'",
+                ",",
+                ".",
+                "/",
+                "-",
+                "`",
+                "F1",
+                "F2",
+                "F3",
+                "F4",
+                "F5",
+                "F6",
+                "F7",
+                "F8",
+                "F9",
+                "F10",
+                "F11",
+                "F12",
+                "LCTRL",
+                "RCTRL",
+                "LSHIFT",
+                "RSHIFT",
+                "LALT",
+                "BACKSPACE",
+                "ESC",
+                "INSERT",
+                "DELETE",
+                "HOME",
+                "END",
+                "PGUP",
+                "PGDOWN",
+                "PRTSCR",
+                "SCRLCK",
+                "PAUSE",
+                "NUMLCK",
+                "CAPSLCK",
+                "TAB",
+                "SPACE",
+                "ENTER",
+                "NUMERIC/",
+                "NUMERIC*",
+                "NUMERIC-",
+                "NUMERIC1",
+                "NUMERIC2",
+                "NUMERIC3",
+                "NUMERIC4",
+                "NUMERIC5",
+                "NUMERIC6",
+                "NUMERIC7",
+                "NUMERIC8",
+                "NUMERIC9",
+                "NUMERIC0",
+                "NUMERIC+",
+                "NUMERIC,",
+                "UPARROW",
+                "DOWNARROW",
+                "LEFTARROW",
+                "RIGHTARROW"
+            };
+            #endregion
+            List<string> actionsGamepad = new List<string>()
+            #region fill gamepad
+            {
+                "DPAD UP",
+                "DPAD DOWN",
+                "DPAD LEFT",
+                "DPAD RIGHT",
+                "L STICK UP",
+                "L STICK DOWN",
+                "L STICK LEFT",
+                "L STICK RIGHT",
+                "R STICK UP",
+                "R STICK DOWN",
+                "R STICK LEFT",
+                "R STICK RIGHT",
+                "A",
+                "B",
+                "X",
+                "Y",
+                "BACK",
+                "START",
+                "RIGHT TRIGGER",
+                "RIGHT BUMPER",
+                "RIGHT STICK CLICK",
+                "LEFT TRIGGER",
+                "LEFT BUMPER",
+                "LEFT STCIK CLICK"
+            };
             #endregion
 
 
-
-
-            for (int clk = 0; clk < actions.Count; clk++)
+            ClearAllCombobox();
+            if (!gamepadMode)
             {
-                cbx_upAction.Items.Add(actions[clk]);
-                cbx_downAction.Items.Add(actions[clk]);
-                cbx_leftAction.Items.Add(actions[clk]);
-                cbx_rightAction.Items.Add(actions[clk]);
-                cbx_act1Action.Items.Add(actions[clk]);
-                cbx_act2Action.Items.Add(actions[clk]);
-                cbx_act3Action.Items.Add(actions[clk]);
-                cbx_act4Action.Items.Add(actions[clk]);
-                cbx_act5Action.Items.Add(actions[clk]);
-                cbx_act6Action.Items.Add(actions[clk]);      
+                for (int clk = 0; clk < actionsKeyboard.Count; clk++)
+                {
+                    cbx_upAction.Items.Add(actionsKeyboard[clk]);
+                    cbx_downAction.Items.Add(actionsKeyboard[clk]);
+                    cbx_leftAction.Items.Add(actionsKeyboard[clk]);
+                    cbx_rightAction.Items.Add(actionsKeyboard[clk]);
+                    cbx_act1Action.Items.Add(actionsKeyboard[clk]);
+                    cbx_act2Action.Items.Add(actionsKeyboard[clk]);
+                    cbx_act3Action.Items.Add(actionsKeyboard[clk]);
+                    cbx_act4Action.Items.Add(actionsKeyboard[clk]);
+                    cbx_act5Action.Items.Add(actionsKeyboard[clk]);
+                    cbx_act6Action.Items.Add(actionsKeyboard[clk]);
+                }
+            }
+            else
+            {
+                for (int clk = 0; clk < actionsGamepad.Count; clk++)
+                {
+                    cbx_upAction.Items.Add(actionsGamepad[clk]);
+                    cbx_downAction.Items.Add(actionsGamepad[clk]);
+                    cbx_leftAction.Items.Add(actionsGamepad[clk]);
+                    cbx_rightAction.Items.Add(actionsGamepad[clk]);
+                    cbx_act1Action.Items.Add(actionsGamepad[clk]);
+                    cbx_act2Action.Items.Add(actionsGamepad[clk]);
+                    cbx_act3Action.Items.Add(actionsGamepad[clk]);
+                    cbx_act4Action.Items.Add(actionsGamepad[clk]);
+                    cbx_act5Action.Items.Add(actionsGamepad[clk]);
+                    cbx_act6Action.Items.Add(actionsGamepad[clk]);
+                }
             }
 
             cbx_upAction.SelectedIndex = 0;
@@ -264,11 +291,24 @@ namespace USBMediaController
             cbx_act4Action.SelectedIndex = 0;
             cbx_act5Action.SelectedIndex = 0;
             cbx_act6Action.SelectedIndex = 0;
-           
+
         }
         #endregion
 
-        //------------------------------------------------------------------------------------
+        private void ClearAllCombobox()
+        {
+            cbx_upAction.Items.Clear();
+            cbx_downAction.Items.Clear();
+            cbx_leftAction.Items.Clear();
+            cbx_rightAction.Items.Clear();
+            cbx_act1Action.Items.Clear();
+            cbx_act2Action.Items.Clear();
+            cbx_act3Action.Items.Clear();
+            cbx_act4Action.Items.Clear();
+            cbx_act5Action.Items.Clear();
+            cbx_act6Action.Items.Clear();
+        }
+
         #region SLOTS
 
         private void btn_profileLoad_Click(object sender, RoutedEventArgs e)
@@ -289,7 +329,8 @@ namespace USBMediaController
         {
             ControlerConfigAddItem window = new ControlerConfigAddItem();
             window.ShowDialog();
-            if (window.Apply()) {
+            if (window.Apply())
+            {
                 Container_ControllerConfig tmp = new Container_ControllerConfig();
                 tmp.setLabel(window.getName());
 
@@ -329,10 +370,10 @@ namespace USBMediaController
             int index = cbx_profile.SelectedIndex;
             container.list.RemoveAt(index);
             Refresh();
-            if (index <= container.list.Count-1) cbx_profile.SelectedIndex = index;
+            if (index <= container.list.Count - 1) cbx_profile.SelectedIndex = index;
             else cbx_profile.SelectedIndex = index - 1;
-            Object tmpObj=null;
-            RoutedEventArgs tmpREA=null;
+            Object tmpObj = null;
+            RoutedEventArgs tmpREA = null;
             btn_profileLoad_Click(tmpObj, tmpREA);
         }
 
@@ -354,7 +395,7 @@ namespace USBMediaController
 
             Refresh();
         }
-      
+
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left) this.DragMove();
@@ -376,21 +417,9 @@ namespace USBMediaController
         }
         #endregion
 
-        //------------------------------------------------------------------------------------
         #region GET SET
-
         public bool Apply() { return apply; }
-
         public Container_ControllerConfig GetConfig() { return container; }
-
-
-
-
-
-
-
-
-
         #endregion
 
 

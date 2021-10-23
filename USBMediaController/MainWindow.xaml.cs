@@ -34,25 +34,25 @@ namespace USBMediaController
     /// </summary>
     public partial class MainWindow : Window
     {
-        //------------------------------------------------------------------------------------
         #region VARIABLES
+
+        #region DEV_VARIABLES
+        bool devStartNotMinimalized = true;
+        #endregion
+
+        #region CONFIG_VARIABLES
+        int maxItemsInConsole = 100;
+        #endregion
 
         Containter_ConnectionInfo connectionInfo = new Containter_ConnectionInfo();
         Container_ControllerConfig controllerConfig = new Container_ControllerConfig();
         string recivedData;
-        string commandTmp="";
         string uartReciverBuffer = "";
-
         private delegate void UpdateUiTextDelegate(string text);
-
         ViGEmClient vGamepadclient;
         IXbox360Controller vGamepadController;
-        
-
-
         #endregion
 
-        //------------------------------------------------------------------------------------
         #region CONSTRUCTOR
         public MainWindow()
         {
@@ -63,11 +63,11 @@ namespace USBMediaController
             vGamepadController.Connect();
 
             if (File.Exists(@"C:\USBGameStick\iconv2.ico")) tray_main.Icon = new System.Drawing.Icon(@"C:\USBGameStick\iconv2.ico");
-            else ConsoleWrite("#Error Load Icon");
+            else ConsoleWrite("#Error Load Icon", Brushes.Pink);
 
             if (!LoadCommunicationConfig())
             {
-                ConsoleWrite("#Error Load Connection Config");
+                ConsoleWrite("#Error Load Connection Config", Brushes.Pink);
                 ShowSysTrayInfo("USBMediaController", "Error Load Connection Config", BalloonIcon.Error);
             }
             else
@@ -76,18 +76,19 @@ namespace USBMediaController
             }
             if (!LoadControllerConfig())
             {
-                ConsoleWrite("#Error Load Controller Config");
+                ConsoleWrite("#Error Load Controller Config", Brushes.Pink);
                 ShowSysTrayInfo("USBMediaController", "Error Load Controller Config", BalloonIcon.Error);
             }
             if (!LoadControllerCurrentSelected())
             {
-                ConsoleWrite("#Error Load Controller Current Selected Profile Config");
+                ConsoleWrite("#Error Load Controller Current Selected Profile Config", Brushes.Pink);
                 ShowSysTrayInfo("USBMediaController", "Error Load Controller Current Selected Profile Config", BalloonIcon.Error);
             }
             CheckFirstRun();
             SetAllInfoControls();
             //CenterWindowOnScreen();
-            this.Hide();
+
+            if (!devStartNotMinimalized) this.Hide();
         }
 
         #endregion
@@ -121,7 +122,7 @@ namespace USBMediaController
                 }
                 catch (Exception ex)
                 {
-                    ConsoleWrite("#Failed send: " + data + "(" + ex.Message + ")");
+                    ConsoleWrite($"#Failed send: {data}({ex.Message})", Brushes.Pink);
                 }
             }
             else
@@ -129,7 +130,7 @@ namespace USBMediaController
             }
         }
 
-     
+
         private string getConnectionStatus()
         {
             if (connectionInfo.serial.IsOpen) return "Connected at port " + connectionInfo.getPortName();
@@ -139,7 +140,7 @@ namespace USBMediaController
         private void SetConnectionInfoFields()
         {
             lbl_connectionStatus.Content = getConnectionStatus();
-            lbl_trayInfoConnection.Content = getConnectionStatus();          
+            lbl_trayInfoConnection.Content = getConnectionStatus();
         }
 
         private void SetProfileInfoFields()
@@ -147,7 +148,8 @@ namespace USBMediaController
             lbl_selectedProfile.Content = controllerConfig.getSelectedLabel();
             tray_main.ToolTipText = controllerConfig.getSelectedLabel();
             lbl_trayInfoProfile.Content = "Profile: " + controllerConfig.getSelectedLabel();
-            if (controllerConfig.getGamepadStatusByID(controllerConfig.getSelectedLabel())){
+            if (controllerConfig.getGamepadStatusByID(controllerConfig.getSelectedLabel()))
+            {
                 lbl_selectedProfile.Content += " (Gamepad mode)";
                 lbl_trayInfoProfile.Content += " (Gamepad mode)";
                 tray_main.ToolTipText += " (Gamepad mode)";
@@ -166,14 +168,18 @@ namespace USBMediaController
         const uint KEYEVENTF_EXTENDEDKEY = 0x0001;
 
 
-        public void ExecuteCommand(string command, bool state)
+        public void ExecuteCommand(string command, bool state, bool isGamepad)
         {
-            // comands list: https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes?redirectedfrom=MSDN
 
-            Dictionary<string, byte> scanCodes = new Dictionary<string, byte>();
-            #region ScanCodes
+            #region keyboard
+            if(!isGamepad)
+            {
+                // comands list: https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes?redirectedfrom=MSDN
 
-            scanCodes.Add("A", (byte)0x41);
+                Dictionary<string, byte> scanCodes = new Dictionary<string, byte>();
+                #region ScanCodes
+
+                scanCodes.Add("A", (byte)0x41);
             scanCodes.Add("B", (byte)0x42);
             scanCodes.Add("C", (byte)0x43);
             scanCodes.Add("D", (byte)0x44);
@@ -282,11 +288,101 @@ namespace USBMediaController
             #endregion
 
             byte currentScanCode = 0;
-            scanCodes.TryGetValue(command, out currentScanCode);          
-                if (state)
-                    keybd_event(currentScanCode, 0, 0, 0);
-                else
-                    keybd_event(currentScanCode, 0, KEYEVENTF_KEYUP | 0, 0);         
+            scanCodes.TryGetValue(command, out currentScanCode);
+            if (state)
+                keybd_event(currentScanCode, 0, 0, 0);
+            else
+                keybd_event(currentScanCode, 0, KEYEVENTF_KEYUP | 0, 0);
+            }
+            #endregion
+            #region gamepad
+            else
+            {
+
+                Dictionary<string, Xbox360Button> scanCodesButton = new Dictionary<string, Xbox360Button>();
+                Dictionary<string, Xbox360Slider> scanCodesSlider = new Dictionary<string, Xbox360Slider>();
+                Dictionary<string, Xbox360Axis> scanCodesAxis = new Dictionary<string, Xbox360Axis>();
+                #region codes
+                scanCodesButton.Add("DPAD UP", Xbox360Button.Up);
+                scanCodesButton.Add("DPAD DOWN", Xbox360Button.Down);
+                scanCodesButton.Add("DPAD LEFT", Xbox360Button.Left);
+                scanCodesButton.Add("DPAD RIGHT", Xbox360Button.Right);             
+                scanCodesButton.Add("A", Xbox360Button.A);
+                scanCodesButton.Add("B", Xbox360Button.B);
+                scanCodesButton.Add("X", Xbox360Button.X);
+                scanCodesButton.Add("Y", Xbox360Button.Y);
+                scanCodesButton.Add("BACK", Xbox360Button.Back);
+                scanCodesButton.Add("START", Xbox360Button.Start);               
+                scanCodesButton.Add("RIGHT BUMPER", Xbox360Button.RightShoulder);
+                scanCodesButton.Add("RIGHT STICK CLICK", Xbox360Button.RightThumb);
+                scanCodesButton.Add("LEFT BUMPER", Xbox360Button.LeftShoulder);
+                scanCodesButton.Add("LEFT STCIK CLICK", Xbox360Button.LeftThumb);
+
+                scanCodesSlider.Add("RIGHT TRIGGER", Xbox360Slider.RightTrigger);
+                scanCodesSlider.Add("LEFT TRIGGER", Xbox360Slider.LeftTrigger);
+
+                scanCodesAxis.Add("L STICK UP", Xbox360Axis.LeftThumbY);
+                scanCodesAxis.Add("L STICK DOWN", Xbox360Axis.LeftThumbY);
+                scanCodesAxis.Add("L STICK LEFT", Xbox360Axis.LeftThumbX);
+                scanCodesAxis.Add("L STICK RIGHT", Xbox360Axis.LeftThumbX);
+                scanCodesAxis.Add("R STICK UP", Xbox360Axis.RightThumbY);
+                scanCodesAxis.Add("R STICK DOWN", Xbox360Axis.RightThumbY);
+                scanCodesAxis.Add("R STICK LEFT", Xbox360Axis.RightThumbX);
+                scanCodesAxis.Add("R STICK RIGHT", Xbox360Axis.RightThumbX);
+                #endregion
+
+                Xbox360Button xboxbtn = null;
+                Xbox360Slider xboxsld = null;
+                Xbox360Axis xboxaxis = null;
+
+                if (scanCodesButton.TryGetValue(command, out xboxbtn))
+                    vGamepadController.SetButtonState(xboxbtn, state);
+                else if (scanCodesSlider.TryGetValue(command, out xboxsld))
+                {
+                    if (state)
+                        vGamepadController.SetSliderValue(xboxsld, 255);
+                    else
+                        vGamepadController.SetSliderValue(xboxsld, 0);
+                }
+                else if (scanCodesAxis.TryGetValue(command, out xboxaxis))
+                {
+                    if(command.Contains("UP"))
+                    {
+                        if (state)
+                            vGamepadController.SetAxisValue(xboxaxis, 32767);
+                        else
+                            vGamepadController.SetAxisValue(xboxaxis, 0);
+                    }
+                    else if (command.Contains("DOWN"))
+                    {
+                        if (state)
+                            vGamepadController.SetAxisValue(xboxaxis, -32768);
+                        else
+                            vGamepadController.SetAxisValue(xboxaxis, 0);
+                    }
+                    else if (command.Contains("LEFT"))
+                    {
+                        if (state)
+                            vGamepadController.SetAxisValue(xboxaxis, -32768);
+                        else
+                            vGamepadController.SetAxisValue(xboxaxis, 0);
+                    }
+                    else if (command.Contains("RIGHT"))
+                    {
+                        if (state)
+                            vGamepadController.SetAxisValue(xboxaxis, 32767);
+                        else
+                            vGamepadController.SetAxisValue(xboxaxis, 0);
+                    }
+
+                 
+                }
+
+
+
+
+            }
+            #endregion
         }
 
 
@@ -294,174 +390,173 @@ namespace USBMediaController
         {
             command = command.Replace("\r", "");
 
-            #region keyboard
-            if (!controllerConfig.getGamepadStatusByID(controllerConfig.getSelectedLabel()))
-            {
+            bool isGamepad = controllerConfig.getGamepadStatusByID(controllerConfig.getSelectedLabel());
                 if (command == "d1" || command == "u1")
                 {
                     if (command == "d1")
-                        ExecuteCommand(controllerConfig.getCommandByID("UP", controllerConfig.getSelectedLabel()), true);
+                        ExecuteCommand(controllerConfig.getCommandByID("UP", controllerConfig.getSelectedLabel()), true, isGamepad);
                     else if (command == "u1")
-                        ExecuteCommand(controllerConfig.getCommandByID("UP", controllerConfig.getSelectedLabel()), false);
+                        ExecuteCommand(controllerConfig.getCommandByID("UP", controllerConfig.getSelectedLabel()), false, isGamepad);
                 }
 
                 else if (command == "d2" || command == "u2")
                 {
                     if (command == "d2")
-                        ExecuteCommand(controllerConfig.getCommandByID("LEFT", controllerConfig.getSelectedLabel()), true);
+                        ExecuteCommand(controllerConfig.getCommandByID("LEFT", controllerConfig.getSelectedLabel()), true, isGamepad);
                     else if (command == "u2")
-                        ExecuteCommand(controllerConfig.getCommandByID("LEFT", controllerConfig.getSelectedLabel()), false);
+                        ExecuteCommand(controllerConfig.getCommandByID("LEFT", controllerConfig.getSelectedLabel()), false, isGamepad);
                 }
 
                 else if (command == "d3" || command == "u3")
                 {
                     if (command == "d3")
-                        ExecuteCommand(controllerConfig.getCommandByID("RIGHT", controllerConfig.getSelectedLabel()), true);
+                        ExecuteCommand(controllerConfig.getCommandByID("RIGHT", controllerConfig.getSelectedLabel()), true, isGamepad);
                     else if (command == "u3")
-                        ExecuteCommand(controllerConfig.getCommandByID("RIGHT", controllerConfig.getSelectedLabel()), false);
+                        ExecuteCommand(controllerConfig.getCommandByID("RIGHT", controllerConfig.getSelectedLabel()), false, isGamepad);
                 }
 
                 else if (command == "d4" || command == "u4")
                 {
                     if (command == "d4")
-                        ExecuteCommand(controllerConfig.getCommandByID("DOWN", controllerConfig.getSelectedLabel()), true);
+                        ExecuteCommand(controllerConfig.getCommandByID("DOWN", controllerConfig.getSelectedLabel()), true, isGamepad);
                     else if (command == "u4")
-                        ExecuteCommand(controllerConfig.getCommandByID("DOWN", controllerConfig.getSelectedLabel()), false);
+                        ExecuteCommand(controllerConfig.getCommandByID("DOWN", controllerConfig.getSelectedLabel()), false, isGamepad);
                 }
 
                 else if (command == "d5" || command == "u5")
                 {
                     if (command == "d5")
-                        ExecuteCommand(controllerConfig.getCommandByID("A1", controllerConfig.getSelectedLabel()), true);
+                        ExecuteCommand(controllerConfig.getCommandByID("A1", controllerConfig.getSelectedLabel()), true, isGamepad);
                     else if (command == "u5")
-                        ExecuteCommand(controllerConfig.getCommandByID("A1", controllerConfig.getSelectedLabel()), false);
+                        ExecuteCommand(controllerConfig.getCommandByID("A1", controllerConfig.getSelectedLabel()), false, isGamepad);
                 }
 
                 else if (command == "d6" || command == "u6")
                 {
                     if (command == "d6")
-                        ExecuteCommand(controllerConfig.getCommandByID("A2", controllerConfig.getSelectedLabel()), true);
+                        ExecuteCommand(controllerConfig.getCommandByID("A2", controllerConfig.getSelectedLabel()), true, isGamepad);
                     else if (command == "u6")
-                        ExecuteCommand(controllerConfig.getCommandByID("A2", controllerConfig.getSelectedLabel()), false);
+                        ExecuteCommand(controllerConfig.getCommandByID("A2", controllerConfig.getSelectedLabel()), false, isGamepad);
                 }
 
                 else if (command == "d7" || command == "u7")
                 {
                     if (command == "d7")
-                        ExecuteCommand(controllerConfig.getCommandByID("A3", controllerConfig.getSelectedLabel()), true);
+                        ExecuteCommand(controllerConfig.getCommandByID("A3", controllerConfig.getSelectedLabel()), true, isGamepad);
                     else if (command == "u7")
-                        ExecuteCommand(controllerConfig.getCommandByID("A3", controllerConfig.getSelectedLabel()), false);
+                        ExecuteCommand(controllerConfig.getCommandByID("A3", controllerConfig.getSelectedLabel()), false, isGamepad);
                 }
 
                 else if (command == "d8" || command == "u8")
                 {
                     if (command == "d8")
-                        ExecuteCommand(controllerConfig.getCommandByID("A4", controllerConfig.getSelectedLabel()), true);
+                        ExecuteCommand(controllerConfig.getCommandByID("A4", controllerConfig.getSelectedLabel()), true, isGamepad);
                     else if (command == "u8")
-                        ExecuteCommand(controllerConfig.getCommandByID("A4", controllerConfig.getSelectedLabel()), false);
+                        ExecuteCommand(controllerConfig.getCommandByID("A4", controllerConfig.getSelectedLabel()), false, isGamepad);
                 }
 
                 else if (command == "d9" || command == "u9")
                 {
                     if (command == "d9")
-                        ExecuteCommand(controllerConfig.getCommandByID("A5", controllerConfig.getSelectedLabel()), true);
+                        ExecuteCommand(controllerConfig.getCommandByID("A5", controllerConfig.getSelectedLabel()), true, isGamepad);
                     else if (command == "u9")
-                        ExecuteCommand(controllerConfig.getCommandByID("A5", controllerConfig.getSelectedLabel()), false);
+                        ExecuteCommand(controllerConfig.getCommandByID("A5", controllerConfig.getSelectedLabel()), false, isGamepad);
                 }
 
                 else if (command == "d10" || command == "u10")
                 {
                     if (command == "d10")
-                        ExecuteCommand(controllerConfig.getCommandByID("A6", controllerConfig.getSelectedLabel()), true);
+                        ExecuteCommand(controllerConfig.getCommandByID("A6", controllerConfig.getSelectedLabel()), true, isGamepad);
                     else if (command == "u10")
-                        ExecuteCommand(controllerConfig.getCommandByID("A6", controllerConfig.getSelectedLabel()), false);
-                }
-            }
-            #endregion
-            #region Gamepad
-            else
-            {
-                if (command == "d1" || command == "u1")
-                {
-                    if (command == "d1")
-                        vGamepadController.SetButtonState(Xbox360Button.Up, true);
-                    else if (command == "u1")
-                        vGamepadController.SetButtonState(Xbox360Button.Up, false);
+                        ExecuteCommand(controllerConfig.getCommandByID("A6", controllerConfig.getSelectedLabel()), false, isGamepad);
                 }
 
-                else if (command == "d2" || command == "u2")
-                {
-                    if (command == "d2")
-                        vGamepadController.SetButtonState(Xbox360Button.Left, true);
-                    else if (command == "u2")
-                        vGamepadController.SetButtonState(Xbox360Button.Left, false);
-                }
 
-                else if (command == "d3" || command == "u3")
-                {
-                    if (command == "d3")
-                        vGamepadController.SetButtonState(Xbox360Button.Right, true);
-                    else if (command == "u3")
-                        vGamepadController.SetButtonState(Xbox360Button.Right, false);
-                }
 
-                else if (command == "d4" || command == "u4")
-                {
-                    if (command == "d4")
-                        vGamepadController.SetButtonState(Xbox360Button.Down, true);
-                    else if (command == "u4")
-                        vGamepadController.SetButtonState(Xbox360Button.Down, false);
-                }
+            //#region Gamepad
+            //else
+            //{
+            //    if (command == "d1" || command == "u1")
+            //    {
+            //        if (command == "d1")
+            //            vGamepadController.SetButtonState(Xbox360Button.Up, true);
+            //        else if (command == "u1")
+            //            vGamepadController.SetButtonState(Xbox360Button.Up, false);
+            //    }
 
-                else if (command == "d5" || command == "u5")
-                {
-                    if (command == "d5")
-                        vGamepadController.SetButtonState(Xbox360Button.X, true);
-                    else if (command == "u5")
-                        vGamepadController.SetButtonState(Xbox360Button.X, false);
-                }
+            //    else if (command == "d2" || command == "u2")
+            //    {
+            //        if (command == "d2")
+            //            vGamepadController.SetButtonState(Xbox360Button.Left, true);
+            //        else if (command == "u2")
+            //            vGamepadController.SetButtonState(Xbox360Button.Left, false);
+            //    }
 
-                else if (command == "d6" || command == "u6")
-                {
-                    if (command == "d6")
-                        vGamepadController.SetButtonState(Xbox360Button.Y, true);
-                    else if (command == "u6")
-                        vGamepadController.SetButtonState(Xbox360Button.Y, false);
-                }
+            //    else if (command == "d3" || command == "u3")
+            //    {
+            //        if (command == "d3")
+            //            vGamepadController.SetButtonState(Xbox360Button.Right, true);
+            //        else if (command == "u3")
+            //            vGamepadController.SetButtonState(Xbox360Button.Right, false);
+            //    }
 
-                else if (command == "d7" || command == "u7")
-                {
-                    if (command == "d7")
-                        vGamepadController.SetButtonState(Xbox360Button.A, true);
-                    else if (command == "u7")
-                        vGamepadController.SetButtonState(Xbox360Button.A, false);
-                }
+            //    else if (command == "d4" || command == "u4")
+            //    {
+            //        if (command == "d4")
+            //            vGamepadController.SetButtonState(Xbox360Button.Down, true);
+            //        else if (command == "u4")
+            //            vGamepadController.SetButtonState(Xbox360Button.Down, false);
+            //    }
 
-                else if (command == "d8" || command == "u8")
-                {
-                    if (command == "d8")
-                        vGamepadController.SetButtonState(Xbox360Button.B, true);
-                    else if (command == "u8")
-                        vGamepadController.SetButtonState(Xbox360Button.B, false);
-                }
+            //    else if (command == "d5" || command == "u5")
+            //    {
+            //        if (command == "d5")
+            //            vGamepadController.SetButtonState(Xbox360Button.X, true);
+            //        else if (command == "u5")
+            //            vGamepadController.SetButtonState(Xbox360Button.X, false);
+            //    }
 
-                else if (command == "d9" || command == "u9")
-                {
-                    if (command == "d9")
-                        vGamepadController.SetButtonState(Xbox360Button.Back, true);
-                    else if (command == "u9")
-                        vGamepadController.SetButtonState(Xbox360Button.Back, false);
-                }
+            //    else if (command == "d6" || command == "u6")
+            //    {
+            //        if (command == "d6")
+            //            vGamepadController.SetButtonState(Xbox360Button.Y, true);
+            //        else if (command == "u6")
+            //            vGamepadController.SetButtonState(Xbox360Button.Y, false);
+            //    }
 
-                else if (command == "d10" || command == "u10")
-                {
-                    if (command == "d10")
-                        vGamepadController.SetButtonState(Xbox360Button.Start, true);
-                    else if (command == "u10")
-                        vGamepadController.SetButtonState(Xbox360Button.Start, false);
-                }
-            }
-            #endregion
+            //    else if (command == "d7" || command == "u7")
+            //    {
+            //        if (command == "d7")
+            //            vGamepadController.SetButtonState(Xbox360Button.A, true);
+            //        else if (command == "u7")
+            //            vGamepadController.SetButtonState(Xbox360Button.A, false);
+            //    }
+
+            //    else if (command == "d8" || command == "u8")
+            //    {
+            //        if (command == "d8")
+            //            vGamepadController.SetButtonState(Xbox360Button.B, true);
+            //        else if (command == "u8")
+            //            vGamepadController.SetButtonState(Xbox360Button.B, false);
+            //    }
+
+            //    else if (command == "d9" || command == "u9")
+            //    {
+            //        if (command == "d9")
+            //            vGamepadController.SetButtonState(Xbox360Button.Back, true);
+            //        else if (command == "u9")
+            //            vGamepadController.SetButtonState(Xbox360Button.Back, false);
+            //    }
+
+            //    else if (command == "d10" || command == "u10")
+            //    {
+            //        if (command == "d10")
+            //            vGamepadController.SetButtonState(Xbox360Button.Start, true);
+            //        else if (command == "u10")
+            //            vGamepadController.SetButtonState(Xbox360Button.Start, false);
+            //    }
+            //}
+            //#endregion
             //Thread.Sleep(10);
 
         }
@@ -469,7 +564,7 @@ namespace USBMediaController
 
         private void CheckFirstRun()
         {
-            if(controllerConfig.list.Count == 0)
+            if (controllerConfig.list.Count == 0)
             {
                 Container_ControllerConfig tmp = new Container_ControllerConfig();
                 tmp.setLabel("Default");
@@ -529,20 +624,26 @@ namespace USBMediaController
                 uartReciverBuffer.Contains("u10"))
             {
                 CheckInputCommand(uartReciverBuffer);
-                ConsoleWrite(uartReciverBuffer);
+                ConsoleWrite(uartReciverBuffer, Brushes.LightSteelBlue);
                 uartReciverBuffer = "";
             }
         }
 
-        private void ConsoleWrite(string val)
+        private void ConsoleWrite(string val, Brush brush = null)
         {
-            tbx_console.Text += val + "\n";
+            ListBoxItem tmpItem = new ListBoxItem();
+            tmpItem.Content = val;
+            if (brush != null)
+                tmpItem.Foreground = brush;
 
+            lbxConsole.Items.Add(tmpItem);
 
-            tbx_console.SelectionStart = tbx_console.Text.Length;
-            tbx_console.ScrollToEnd();
+            if (lbxConsole.Items.Count > maxItemsInConsole)
+                lbxConsole.Items.RemoveAt(0);
+
+            lbxConsole.SelectedIndex = lbxConsole.Items.Count - 1;
+            lbxConsole.ScrollIntoView(lbxConsole.SelectedItem);
         }
-
         #endregion
 
         //------------------------------------------------------------------------------------
@@ -590,7 +691,7 @@ namespace USBMediaController
             if (!Directory.Exists(@"C:\USBGameStick\")) Directory.CreateDirectory(@"C:\USBGameStick\");
             using (BinaryWriter binWriter = new BinaryWriter(File.Open(@"C:\USBGameStick\ConfigController.bin", FileMode.Create)))
             {
-                for(int clk = 0; clk < controllerConfig.list.Count; clk++)
+                for (int clk = 0; clk < controllerConfig.list.Count; clk++)
                 {
                     binWriter.Write(controllerConfig.list[clk].getLabel());
                     binWriter.Write(controllerConfig.list[clk].getGamepadMode());
@@ -644,7 +745,7 @@ namespace USBMediaController
                     tmp.setProfileSetting(7, new Container_SingleCommand(binReader.ReadString(), binReader.ReadString()));
 
                     tmp.setProfileSetting(8, new Container_SingleCommand(binReader.ReadString(), binReader.ReadString()));
-                    tmp.setProfileSetting(9, new Container_SingleCommand(binReader.ReadString(), binReader.ReadString()));  
+                    tmp.setProfileSetting(9, new Container_SingleCommand(binReader.ReadString(), binReader.ReadString()));
 
                     controllerConfig.list.Add(tmp);
                 }
@@ -699,7 +800,7 @@ namespace USBMediaController
         //------------------------------------------------------------------------------------
         #region SLOTS
 
- 
+
 
         private void btn_ConnectionSettings_Click(object sender, RoutedEventArgs e)
         {
@@ -724,7 +825,7 @@ namespace USBMediaController
                     {
                         btn_connect.Content = "Connect";
                         ShowSysTrayInfo("USBMediaController", "Disconnected", BalloonIcon.Info);
-                        ConsoleWrite("#Disconnected");
+                        ConsoleWrite("#Disconnected", Brushes.LightGreen);
                     }
                 }
                 else
@@ -734,8 +835,8 @@ namespace USBMediaController
                     {
                         connectionInfo.serial.DataReceived += new System.IO.Ports.SerialDataReceivedEventHandler(Recieve);
                         btn_connect.Content = "Disconnect";
-                        ShowSysTrayInfo("USBMediaController", "Connected at port " + connectionInfo.getPortName(), BalloonIcon.Info);
-                        ConsoleWrite("#Connected at port " + connectionInfo.getPortName());
+                        ShowSysTrayInfo("USBMediaController", $"Connected at port {connectionInfo.getPortName()}", BalloonIcon.Info);
+                        ConsoleWrite($"#Connected at port {connectionInfo.getPortName()}", Brushes.LightGreen);
                     }
                 }
                 SetAllInfoControls();
@@ -743,7 +844,7 @@ namespace USBMediaController
             catch (Exception exception)
             {
                 ShowSysTrayInfo("USBMediaController", exception.Message, BalloonIcon.Error);
-                ConsoleWrite("#ERROR: " + exception.Message);
+                ConsoleWrite("#ERROR: " + exception.Message, Brushes.Pink);
             }
         }
 
@@ -788,12 +889,13 @@ namespace USBMediaController
 
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if(e.ChangedButton == MouseButton.Left) this.DragMove();
+            if (e.ChangedButton == MouseButton.Left) this.DragMove();
         }
 
         private void btn_clearConsole_Click(object sender, RoutedEventArgs e)
         {
-            tbx_console.Clear();
+            // tbx_console.Clear();
+            lbxConsole.Items.Clear();
         }
 
 
